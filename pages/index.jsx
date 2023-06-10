@@ -1,6 +1,18 @@
 import React from 'react';
-
+import Link from 'next/link';
+const Child = () => {
+  return <a>Move to '/tomato'</a>;
+};
 function App() {
-  return <div>Hello Next.js</div>;
+  return (
+    <div>
+      <h2>Link to 'tomato' Page</h2>
+      <Link href="/tomato">
+        <a>
+          <Child />
+        </a>
+      </Link>
+    </div>
+  );
 }
 export default App;
