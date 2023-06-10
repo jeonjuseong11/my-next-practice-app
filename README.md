@@ -328,14 +328,14 @@ string 값으로 브라우저의 URL에 표시될 값으로 Next 버전 9.5.3 �
 boolean 값으로 브라우저의 history 스택에 url을 추가하지 않고 현재 상태를 변경  
 **scroll?**  
 boolean값으로 스크롤을 맨 위로 이동할지 설정하는 값  
-기본값은 true
-**shallow?**  
+기본값은 true  
+**shallow?**   
 boolean값으로 서버에서 데이터를 불러오는 작업을 스킵 할 때 사용  
-기본값은 false
+기본값은 false  
 **passHref?**  
 boolean값으로 자식에게 href를 전달  
 리액트 컴포넌트에 href를 전달할 수 있게됨  
 **prefetch?**  
 boolean값으로 백그라운드에서 페이지를 미리 가져오게 됨  
 브라우저의 화면의 Link 컴포넌트의 페이지들을 미리 가져오게 됨  
-기본값을 true
+기본값을 true  
