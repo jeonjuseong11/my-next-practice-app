@@ -6,12 +6,8 @@ const Child = () => {
 function App() {
   return (
     <div>
-      <h2>Link to 'tomato' Page</h2>
-      <Link href="/tomato">
-        <a>
-          <Child />
-        </a>
-      </Link>
+      <h2>Link to 'potato' Page</h2>
+      <Link href="/vegetable/potato">Move to '/vegetable/potato'</Link>
     </div>
   );
 }
