@@ -11,6 +11,10 @@
 [넥스트의 기본 기능](#넥스트의-기본-기능)  
 [Link 컴포넌트](#link-컴포넌트)
 [Link 컴포넌트의 속성](#link-컴포넌트의-속성들)
+[넥스트 라우팅](#넥스트의-라우팅)
+[getServerSideProps](#getserversideprops)
+[getStaticProps](#getstaticprops)
+[getInitialProps](#getinitialprops)
 
 ### **넥스트(Next.js)**
 
@@ -251,6 +255,9 @@ module.exports = {
 
 ### **넥스트의 라우팅**
 
+pages 폴더를 사용하여 정적 페이지와 동적 페이지의 라우팅 설정 하고 Link 컴포넌트와 라우터 객체를 이용하여 주소 이동을 할 수 있음  
+이를 통해 넥스트에서 제공하는 라우팅 관련 기능들의 편리함을 알 수 있음
+
 #### **정적 페이지 라우팅**
 
 pages 폴더에 파일을 만드는 것만으로 경로가 자동으로 설정됨
@@ -349,4 +356,249 @@ useRouter훅을 사용하여 확인할 수 있음
 
 라우트 객체를 리턴하는 next/router의 훅스  
 대괄호로 감싼 파일이름이 속성명  
-속성값은 접속하는 주소명으로 정해지게된다.
+속성값은 접속하는 주소명으로 정해지게 됨
+
+### **라우팅 객체를 이용하여 라우팅 하기**
+
+주소 이동을 항상 Link 컴포넌트를 사용하지 않음  
+때로는 함수 내에서 라우트 이동을 하게 되는 경우도 있음
+
+**useState를 이용한 동적 라우팅**  
+`<input>`태그를 이용하여 텍스트를 입력하고 입력한 텍스트 주소로 이동하는 예시  
+**index.jsx**
+
+```js
+import React, { useState } from 'react';
+import { useRouter } from 'next/router';
+
+function App() {
+  const [name, setName] = useState('');
+  const router = useRouter();
+  return (
+    <div>
+      <button type="button" onClick={() => router.push('/tomato')}>
+        tomato로 가기
+      </button>
+      <p>이름</p>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        style={{ marginRight: '12px' }}
+      />
+      <button type="button" onClick={() => router.push(`vegetable/${name}`)}>
+        {name} 으로 가기
+      </button>
+    </div>
+  );
+}
+export default App;
+```
+
+**pages/vegetable/[name].jsx**
+
+```js
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+
+const name = () => {
+  const { query } = useRouter();
+  return (
+    <div>
+      <h2>Hello!!! {query.name}</h2>
+      <Link href="/">Move to '/'</Link>
+    </div>
+  );
+};
+export default name;
+```
+
+### **정적 파일 사용**
+
+public폴더를 사용하여 정적 파일을 제공할 수 있음  
+브라우저에서 네트워크를 통하여 이미지를 불러오게 됨  
+이미지 파일 이외에도 폰트, manifest.json, robots.txt, favicon.ico 등의 정적 파일을 제공할 때 유용하게 사용됨
+
+### **서버로부터 데이터 불러오기**
+
+기본적으로 Next.js는 모든 페이지를 미리 렌더링함  
+렌더링을 하여 html을 생성하게 되면 더 나은 성능과 SEO이점을 얻을 수 있음
+
+#### **넥스트의 사전 렌더링**
+
+1. 정적 생성  
+   빌드 시에 페이지를 html로 만들어 요청 시 제공
+2. 서버 사이드 렌더링  
+   페이지 요청 시 서버 사이트 렌더링을 통하여 html을 제공
+
+#### **isomorphic-unfetch**
+
+서버에서 데이터를 패치하기 위해 필요한 모듈
+
+```bash
+yarn add isomorphic-unfetch
+```
+
+### **getServerSideProps**
+
+이름 그래도 서버 측에서 props를 받아오는 기능  
+페이지의 데이터를 서버로부터 제공받는 기본 API  
+서버에서 데이터를 패치하여 초기 데이터를 전달하도록 구성 되어있음  
+페이지를 요청 시마다 실행이 되며 getServerSideProps에서 페이지로 전달해준 데이터를 서버에서 렌더링 하게 됨  
+파일명의 [name]값은 getServerSideProps의 매개변수 값인 query로 받아올 수 있음  
+query를 통해 얻은 name값은 api의 파라미터로 전달하여 원하는 유저의 정보를 불러올 수 있음
+
+#### **유저 검색하기**
+
+**index.jsx**
+
+```js
+import React, { useState } from 'react';
+const App = () => {
+  const [username, setUsername] = useState('');
+  return (
+    <div>
+      <label>
+        username
+        <input value={username} onChange={(e) => setUsername(e.target.value)} />
+      </label>
+      <p>{username} 깃허브 검색하기</p>
+      <Link href={`/users/${username}`}>검색하기</Link>
+    </div>
+  );
+};
+
+export default App;
+```
+
+**[name].jsx**
+
+```js
+import fetch from 'isomorphic-unfetch';
+
+const name = ({ user }) => {
+  const username = user && user.name; //user값이 undefined 일 수 있기 때문
+  return <div>{username}</div>;
+};
+
+export const getServerSideProps = async ({ query }) => {
+  const { name } = query;
+  try {
+    const res = await fetch(`https://api.github.com/users/${name}`);
+    //query를 통해 얻은 name 값을 api의 파라미터로 전달하여 원하는 정보를 불러올 수 있음
+    if (res.status === 200) {
+      //데이터를 불러오기에 성공했다면 user 정보를 페이지에 props로 전달
+      const user = await res.json();
+      return { props: { user } };
+    }
+    return { props: {} }; //실패시 아무것도 전달하지 않음
+  } catch (e) {
+    console.log(e);
+    return { props: {}
+
+```
+
+### **getStaticProps**
+
+getServerSideProps와 다르게 빌드 시에 데이터를 불러와 결과를 json으로 저장하여 사용하게 됨  
+일관된 데이터를 보여줄 때 사용
+9.5 버전부터 정적 데이터를 갱신할 수 있음  
+**revalidate**  
+정해진 시간마다 요청이 들어올 때 데이터를 갱신하여 제공  
+ex) staticPage.jsx
+
+```js
+const staticPage = ({ time }) => {
+  return <div>{time}</div>;
+};
+
+export const getStaticProps = async () => {
+  return { props: { time: new Date().toISOString() }, revalidate: 3 }; //3초마다 요청이 들어올때 갱신
+};
+export default staticPage;
+```
+
+#### **동적페이지에서 getStaticProps**
+
+getServerSideProps와 달리 **query** 대신 **params**를 사용
+**getStaticPaths**를 이용해 **params를 미리 지정**해 주어야함  
+**fallback** 값은 지정한 경로 이외의 경로에 대해 설정  
+**fallback**이 **false**이면 이외의 경로는 **404 에러** 페이지로 감
+**getStaticPaths**는 페이지의 경로가 외부 데이터에 의존할 때 사용됨
+
+**[name].jsx**
+
+```js
+import fetch from 'isomorphic-unfetch';
+
+const name = ({ user, time }) => {
+  const username = user && user.name; //user값이 undefined 일 수 있기 때문
+  return (
+    <div>
+      {username}
+      {time}
+    </div>
+  );
+};
+
+export const getStaticProps = async ({ params }) => {
+  try {
+    const res = await fetch(`https://api.github.com/users/${params.name}`);
+    //query를 통해 얻은 name 값을 api의 파라미터로 전달하여 원하는 정보를 불러올 수 있음
+    const user = await res.json();
+    if (res.status === 200) {
+      //데이터를 불러오기에 성공했다면 user 정보를 페이지에 props로 전달
+      const user = await res.json();
+      return { props: { user, time: new Date().toISOString() } };
+    }
+    return { props: { time: new Date().toISOString() } }; //실패시 아무것도 전달하지 않음
+  } catch (e) {
+    console.log(e);
+    return { props: { time: new Date().toISOString() } };
+  }
+};
+export async function getStaticPaths() {
+  return {
+    paths: [{ params: { name: 'jerrynim' } }],
+    //넥스트를 사용하는 유저를 조회한 결과 ["jerrynim"]의 값을 얻고
+    //static/jerrymin 페이지를 getStaticProps를 사용하여 데이터를 저장하게 되고
+    //페이지에 접속할 때마다 미리 렌더링된 html을 제공할 수 있음
+    fallback: true, //false이면 이외의 경로일때 404 에러 발생
+  };
+}
+export default name;
+```
+
+### **getInitialProps**
+
+9.3 버전 이전부터 서버 사이드 데이터 패치를 위해 사용되던 함수  
+9.3 이상의 버전부터 getServerSideProps, getStaticProps 사용을 권장함  
+getServerSideProps와 비슷하지만 컴포넌트의 함수에 getInitialProps를 추가하는 방식으로 사용됨
+
+```js
+import fetch from 'isomorphic-unfetch';
+
+const name = ({ user }) => {
+  const username = user && user.name; //user값이 undefined 일 수 있기 때문
+  return <div>{username}</div>;
+};
+
+name.getInitialProps = async ({ query }) => {
+  const { name } = query;
+  try {
+    const res = await fetch(`https://api.github.com/users/${name}`);
+    if (res.status === 200) {
+      const user = await res.json();
+      return { user };
+    }
+    return {};
+  } catch (e) {
+    console.log(e);
+    return {};
+  }
+};
+export default name;
+```
+
+props속성을 사용하지 않고 return 함  
+**getInitialProps를 사용하면**  
+초기 렌더링 시에는 서버에서 데이터를 불러오지만 클라이언트 측 내비게이션을 사용하게 되면 클라이언트 측에 데이터를 불러옴
