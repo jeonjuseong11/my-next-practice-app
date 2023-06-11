@@ -1,11 +1,18 @@
+import Profile from '@/components/Profile';
 import fetch from 'isomorphic-unfetch';
 
 const name = ({ user }) => {
-  const username = user && user.name; //user값이 undefined 일 수 있기 때문
-  return <div>{username}</div>;
+  if (!user) {
+    return null; // user 정보가 없을 경우 에러 방지
+  }
+  return (
+    <>
+      <Profile user={user} />
+    </>
+  );
 };
 
-name.getInitialProps = async ({ query }) => {
+export const getServerSideProps = async ({ query }) => {
   const { name } = query;
   try {
     const res = await fetch(`https://api.github.com/users/${name}`);
@@ -16,7 +23,7 @@ name.getInitialProps = async ({ query }) => {
     return { props: {} };
   } catch (e) {
     console.log(e);
-    return {};
+    return { props: {} };
   }
 };
 export default name;

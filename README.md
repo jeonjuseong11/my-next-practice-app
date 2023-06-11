@@ -16,7 +16,7 @@
 [getStaticProps](#getstaticprops)
 [getInitialProps](#getinitialprops)
 
-### **넥스트(Next.js)**
+## **넥스트(Next.js)**
 
 Vercel(버셀)에서 만든 리액트 기반 프레임워크로 개발자에게 뛰어난 생산성과 편의성을 제공
 
@@ -602,3 +602,133 @@ export default name;
 props속성을 사용하지 않고 return 함  
 **getInitialProps를 사용하면**  
 초기 렌더링 시에는 서버에서 데이터를 불러오지만 클라이언트 측 내비게이션을 사용하게 되면 클라이언트 측에 데이터를 불러옴
+
+### **styled-jsx**
+
+CSS-in-JS 라이브러리로 css를 캡슐화하고 범위가 지정되게 만들어 구성요소를 스타일링 할 수 있음  
+Next에 기본으로 제공되기 때문에 설치할 필요 없음  
+한 구성 요소의 스타일링은 다른 구성 요소에 영향을 미치지 않도록 하는 특징  
+`<styled jsx>`태그를 사용해 내부에 css을 간단하게 사용할 수 있음
+**[name].jsx**
+
+```js
+import fetch from 'isomorphic-unfetch';
+import css from 'styled-jsx/css';
+
+const style = css`
+  .profile-box {
+    width: 25%;
+    max-width: 272px;
+    margin-right: 26px;
+  }
+  .profile-image-wrapper {
+    width: 100%;
+    border: 1px solid #ele4e8;
+  }
+  .profile-image-wrapper .profile-image {
+    display: block;
+    width: 100%;
+  }
+  .profile-username {
+    margin: 0;
+    pading-top: 16px;
+    font-size: 26px;
+  }
+  .profile-user-login {
+    margin: 0;
+    font-size: 20px;
+  }
+  .profile-user-bio {
+    margin: 0;
+    padding-top: 16px;
+    font-size: 14px;
+  }
+`;
+const name = ({ user }) => {
+  if (!user) {
+    return null; // user 정보가 없을 경우 에러 방지
+  }
+  return (
+    <>
+      <div className="profile-box">
+        <div className="profile-image-wrapper">
+          <img
+            className="profile-image"
+            src={user.avatar_url}
+            alt={`${user.name} 프로필 이미지`}
+          />
+        </div>
+        <h2 className="profile-username">{user.name}</h2>
+        <p className="profile-user-login">{user.login}</p>
+        <p className="profile-user-bio">{user.bio}</p>
+      </div>
+      <style jsx>{style}</style>
+    </>
+  );
+};
+
+export const getServerSideProps = async ({ query }) => {
+  const { name } = query;
+  try {
+    const res = await fetch(`https://api.github.com/users/${name}`);
+    if (res.status === 200) {
+      const user = await res.json();
+      return { props: { user } };
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+export default name;
+```
+
+### **react-icon**
+
+여러 아이콘들을 모아놓은 라이브러리로 아이콘을 다운로드 받지 않고도 쉽게 사용할 수 있음
+
+**styled-jsx와 react-icon을 이용한 github 프로필 만들기**  
+Profile이라는 이름의 컴포넌트로 해당 코드 분리
+props로 user를 전달하여 렌더링
+
+```js
+import Profile from '@/components/Profile';
+import fetch from 'isomorphic-unfetch';
+
+const name = ({ user }) => {
+  if (!user) {
+    return null; // user 정보가 없을 경우 에러 방지
+  }
+  return (
+    <>
+      <Profile user={user} />
+    </>
+  );
+};
+
+export const getServerSideProps = async ({ query }) => {
+  const { name } = query;
+  try {
+    const res = await fetch(`https://api.github.com/users/${name}`);
+    if (res.status === 200) {
+      const user = await res.json();
+      return { props: { user } };
+    }
+    return { props: {} };
+  } catch (e) {
+    console.log(e);
+    return { props: {} };
+  }
+};
+export default name;
+```
+
+#### **깃허브 프로필에 레포지토리 리스트 렌더링**
+
+**레포지토리 요청 api**
+
+```
+https://api.github.com/users/${username}/repos?sort=updated&page=1&per_page=10
+```
+
+per_page : 페이지 당 받게될 레포지토리의 개수  
+page : per_page의 개수만큼 나누었을 떄 불러올 그룹의 번호
